@@ -3,22 +3,43 @@ import streamlit_option_menu
 from streamlit_extras.stoggle import stoggle
 from processing import preprocess
 from processing.display import Main
-import streamlit as st
-# Setting the wide mode as default
-# st.set_page_config(layout="wide")
+import requests
+import os
+import pandas as pd
+
+# The st.set_page_config() function must be the very first Streamlit command.
 st.set_page_config(page_title="Aditya Vikram Singh app", layout="wide") 
 
+# This code hides the default Streamlit footer.
 hide_streamlit_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            </style>
-            """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+    """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-# Rest of your code goes here...
+# List of all your files and their corresponding download links
+FILES_TO_DOWNLOAD = {
+    "similarity_tags_genres.pkl": "https://drive.google.com/uc?export=download&id=1nahQKZHpML2NY34qvhvfb2t-A0PVnjwG",
+    "movies2_dict.pkl": "https://drive.google.com/uc?export=download&id=1glrH-nYq2rRqKv0XZ9-jnGtMGoWH8as6",
+    "new_df_dict.pkl": "https://drive.google.com/uc?export=download&id=17hQHQ8h-WoJK9KMxM2_UC8Ie2oLpHxMw",
+    "tmdb_5000_movies.csv": "https://drive.google.com/uc?export=download&id=1GziUgfVsBPF0duXIjBNCG5uRrxaUNJ3R",
+    "tmdb_5000_credits.csv": "https://drive.google.com/uc?export=download&id=1UKih_zrpf8IetZtqF-Zp3PrQg8sAjdxl",
+    "similarity_tags_keywords.pkl": "https://drive.google.com/uc?export=download&id=1UKih_zrpf8IetZtqF-Zp3PrQg8sAjdxl",
+    "similarity_tags_tcast.pkl": "https://drive.google.com/uc?export=download&id=1XcO0Mg_9iELSFfhGh1okvNxc3oal5TnM",
+    "similarity_tags_tprduction_comp.pkl": "https://drive.google.com/uc?export=download&id=1x9-De0qQiUZPw5L-i07bqYpngaRKpRo2",
+    "similarity_tags_tags.pkl": "https://drive.google.com/uc?export=download&id=15aNXc7_oftnv5_0aqjsdCcijY7fKF8y_",
+    "movies_dict.pkl": "https://drive.google.com/uc?export=download&id=1m9GONe0guFk06DRizdPCxagQuge6LR9p"
+}
 
-
+def download_all_files():
+    for file_name, file_url in FILES_TO_DOWNLOAD.items():
+        if not os.path.exists(file_name):
+            st.write(f"Downloading {file_name}...")
+            response = requests.get(file_url)
+            with open(file_name, "wb") as f:
+                f.write(response.content)
 
 displayed = []
 
@@ -31,8 +52,10 @@ if 'selected_movie_name' not in st.session_state:
 if 'user_menu' not in st.session_state:
     st.session_state['user_menu'] = ""
 
-
 def main():
+    # This must be the first thing that happens inside your main function
+    download_all_files()
+
     def initial_options():
         # To display menu
         st.session_state.user_menu = streamlit_option_menu.option_menu(
@@ -63,12 +86,12 @@ def main():
         rec_button = st.button('Recommend')
         if rec_button:
             st.session_state.selected_movie_name = selected_movie_name
-            recommendation_tags(new_df, selected_movie_name, r'Files/similarity_tags_tags.pkl',"are")
-            recommendation_tags(new_df, selected_movie_name, r'Files/similarity_tags_genres.pkl',"on the basis of genres are")
+            recommendation_tags(new_df, selected_movie_name, 'similarity_tags_tags.pkl',"are")
+            recommendation_tags(new_df, selected_movie_name, 'similarity_tags_genres.pkl',"on the basis of genres are")
             recommendation_tags(new_df, selected_movie_name,
-                                r'Files/similarity_tags_tprduction_comp.pkl',"from the same production company are")
-            recommendation_tags(new_df, selected_movie_name, r'Files/similarity_tags_keywords.pkl',"on the basis of keywords are")
-            recommendation_tags(new_df, selected_movie_name, r'Files/similarity_tags_tcast.pkl',"on the basis of cast are")
+                                'similarity_tags_tprduction_comp.pkl',"from the same production company are")
+            recommendation_tags(new_df, selected_movie_name, 'similarity_tags_keywords.pkl',"on the basis of keywords are")
+            recommendation_tags(new_df, selected_movie_name, 'similarity_tags_tcast.pkl',"on the basis of cast are")
 
     def recommendation_tags(new_df, selected_movie_name, pickle_file_path,str):
 
@@ -316,11 +339,7 @@ def main():
         new_df, movies, movies2 = bot.getter()
         initial_options()
 
-
 if __name__ == '__main__':
     main()
     import streamlit as st
-
-# ... your existing code ...
-
-st.markdown("<p style='text-align: center; color: grey;'>Built by Aditya vikram singh</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: grey;'>Built by Aditya vikram singh</p>", unsafe_allow_html=True)
