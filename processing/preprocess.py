@@ -12,9 +12,8 @@ import streamlit as st
 
 # Object for porterStemmer
 ps = PorterStemmer()
-# NOTE: Download stopwords outside of functions for better performance, 
-# but Streamlit Cloud usually handles this or you may run this once locally.
-# nltk.download('stopwords') 
+
+# --- Functions for data extraction ---
 
 def get_genres(obj):
     lista = ast.literal_eval(obj)
