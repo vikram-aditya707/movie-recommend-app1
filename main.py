@@ -20,26 +20,37 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # List of all your files and their corresponding download links
+# CONFIRM=1 parameter added to bypass Google Drive's security warning for large files.
 FILES_TO_DOWNLOAD = {
-    "similarity_tags_genres.pkl": "https://drive.google.com/uc?export=download&id=1nahQKZHpML2NY34qvhvfb2t-A0PVnjwG",
-    "movies2_dict.pkl": "https://drive.google.com/uc?export=download&id=1glrH-nYq2rRqKv0XZ9-jnGtMGoWH8as6",
-    "new_df_dict.pkl": "https://drive.google.com/uc?export=download&id=17hQHQ8h-WoJK9KMxM2_UC8Ie2oLpHxMw",
-    "tmdb_5000_movies.csv": "https://drive.google.com/uc?export=download&id=1GziUgfVsBPF0duXIjBNCG5uRrxaUNJ3R",
-    "tmdb_5000_credits.csv": "https://drive.google.com/uc?export=download&id=1UKih_zrpf8IetZtqF-Zp3PrQg8sAjdxl",
-    "similarity_tags_keywords.pkl": "https://drive.google.com/uc?export=download&id=1UKih_zrpf8IetZtqF-Zp3PrQg8sAjdxl",
-    "similarity_tags_tcast.pkl": "https://drive.google.com/uc?export=download&id=1XcO0Mg_9iELSFfhGh1okvNxc3oal5TnM",
-    "similarity_tags_tprduction_comp.pkl": "https://drive.google.com/uc?export=download&id=1x9-De0qQiUZPw5L-i07bqYpngaRKpRo2",
-    "similarity_tags_tags.pkl": "https://drive.google.com/uc?export=download&id=15aNXc7_oftnv5_0aqjsdCcijY7fKF8y_",
-    "movies_dict.pkl": "https://drive.google.com/uc?export=download&id=1m9GONe0guFk06DRizdPCxagQuge6LR9p"
+    "similarity_tags_genres.pkl": "https://drive.google.com/uc?export=download&id=1nahQKZHpML2NY34qvhvfb2t-A0PVnjwG&confirm=1",
+    "movies2_dict.pkl": "https://drive.google.com/uc?export=download&id=1glrH-nYq2rRqKv0XZ9-jnGtMGoWH8as6&confirm=1",
+    "new_df_dict.pkl": "https://drive.google.com/uc?export=download&id=17hQHQ8h-WoJK9KMxM2_UC8Ie2oLpHxMw&confirm=1",
+    "tmdb_5000_movies.csv": "https://drive.google.com/uc?export=download&id=1GziUgfVsBPF0duXIjBNCG5uRrxaUNJ3R&confirm=1",
+    "tmdb_5000_credits.csv": "https://drive.google.com/uc?export=download&id=1UKih_zrpf8IetZtqF-Zp3PrQg8sAjdxl&confirm=1",
+    "similarity_tags_keywords.pkl": "https://drive.google.com/uc?export=download&id=1UKih_zrpf8IetZtqF-Zp3PrQg8sAjdxl&confirm=1",
+    "similarity_tags_tcast.pkl": "https://drive.google.com/uc?export=download&id=1XcO0Mg_9iELSFfhGh1okvNxc3oal5TnM&confirm=1",
+    "similarity_tags_tprduction_comp.pkl": "https://drive.google.com/uc?export=download&id=1x9-De0qQiUZPw5L-i07bqYpngaRKpRo2&confirm=1",
+    "similarity_tags_tags.pkl": "https://drive.google.com/uc?export=download&id=15aNXc7_oftnv5_0aqjsdCcijY7fKF8y_&confirm=1",
+    "movies_dict.pkl": "https://drive.google.com/uc?export=download&id=1m9GONe0guFk06DRizdPCxagQuge6LR9p&confirm=1"
 }
 
 def download_all_files():
     for file_name, file_url in FILES_TO_DOWNLOAD.items():
         if not os.path.exists(file_name):
             st.write(f"Downloading {file_name}...")
-            response = requests.get(file_url)
+            # Use stream=True for large files and allow redirects
+            response = requests.get(file_url, stream=True, allow_redirects=True) 
+            
+            # Check if the download failed (e.g., got a non-file response)
+            if response.status_code != 200:
+                st.error(f"Failed to download {file_name}. Status: {response.status_code}")
+                # We do NOT raise an error here to allow other files to download.
+                
             with open(file_name, "wb") as f:
-                f.write(response.content)
+                # Write content in chunks for large files
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            # st.success(f"{file_name} downloaded successfully!") # Removed success message to prevent excessive screen clutter
 
 displayed = []
 
@@ -79,6 +90,7 @@ def main():
 
         st.title('Movie Recommender System')
 
+        # new_df is retrieved from the bot.getter() call
         selected_movie_name = st.selectbox(
             'Select a Movie...', new_df['title'].values
         )
@@ -89,20 +101,20 @@ def main():
             recommendation_tags(new_df, selected_movie_name, 'similarity_tags_tags.pkl',"are")
             recommendation_tags(new_df, selected_movie_name, 'similarity_tags_genres.pkl',"on the basis of genres are")
             recommendation_tags(new_df, selected_movie_name,
-                                'similarity_tags_tprduction_comp.pkl',"from the same production company are")
+                                 'similarity_tags_tprduction_comp.pkl',"from the same production company are")
             recommendation_tags(new_df, selected_movie_name, 'similarity_tags_keywords.pkl',"on the basis of keywords are")
             recommendation_tags(new_df, selected_movie_name, 'similarity_tags_tcast.pkl',"on the basis of cast are")
 
     def recommendation_tags(new_df, selected_movie_name, pickle_file_path,str):
 
-        movies, posters = preprocess.recommend(new_df, selected_movie_name, pickle_file_path)
+        movies_rec, posters = preprocess.recommend(new_df, selected_movie_name, pickle_file_path)
         st.subheader(f'Best Recommendations {str}...')
 
         rec_movies = []
         rec_posters = []
         cnt = 0
         # Adding only 5 uniques recommendations
-        for i, j in enumerate(movies):
+        for i, j in enumerate(movies_rec):
             if cnt == 5:
                 break
             if j not in displayed:
@@ -130,9 +142,9 @@ def main():
             st.image(rec_posters[4])
 
     def display_movie_details():
+        # Global variables movies and movies2 are needed here, assumed accessible from the Main class.
 
         selected_movie_name = st.session_state.selected_movie_name
-        # movie_id = movies[movies['title'] == selected_movie_name]['movie_id']
         info = preprocess.get_details(selected_movie_name)
 
         with st.container():
@@ -175,18 +187,18 @@ def main():
                 st.text('\n')
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    str = ""
+                    str_genres = ""
                     st.text("Genres")
                     for i in info[2]:
-                        str = str + i + " . "
-                    st.write(str)
+                        str_genres = str_genres + i + " . "
+                    st.write(str_genres)
 
                 with col2:
-                    str = ""
+                    str_lang = ""
                     st.text("Available in")
                     for i in info[13]:
-                        str = str + i + " . "
-                    st.write(str)
+                        str_lang = str_lang + i + " . "
+                    st.write(str_lang)
                 with col3:
                     st.text("Directed by")
                     st.text(info[12][0])
@@ -239,6 +251,7 @@ def main():
             )
 
     def paging_movies():
+        # Global movies variable used here
         # To create pages functionality using session state.
         max_pages = movies.shape[0] / 10
         max_pages = int(max_pages) - 1
@@ -266,7 +279,7 @@ def main():
         display_all_movies(st.session_state['movie_number'])
 
     def display_all_movies(start):
-
+        # Global movies variable used here
         i = start
         with st.container():
             col1, col2, col3, col4, col5 = st.columns(5)
@@ -333,6 +346,9 @@ def main():
                 i = i + 1
 
         st.session_state['page_number'] = i
+    
+    # Declare new_df, movies, movies2 as global so they can be accessed by the functions above
+    global new_df, movies, movies2 
 
     with Main() as bot:
         bot.main_()
