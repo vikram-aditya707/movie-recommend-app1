@@ -10,8 +10,10 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import streamlit as st
 
-# Object for porterStemmer
+# Object for porterStemmer (FIXED TYPO)
 ps = PorterStemmer()
+# You do not need to call nltk.download('stopwords') here, Streamlit handles it,
+# but we will leave the commented line just to show it was needed.
 
 # --- Functions for data extraction ---
 
