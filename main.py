@@ -20,7 +20,7 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # List of all your files and their corresponding download links
-# CONFIRM=1 parameter added to bypass Google Drive's security warning for large files.
+# CRITICAL FIX: Adding &confirm=1 to bypass Google Drive's security warning for large files.
 FILES_TO_DOWNLOAD = {
     "similarity_tags_genres.pkl": "https://drive.google.com/uc?export=download&id=1nahQKZHpML2NY34qvhvfb2t-A0PVnjwG&confirm=1",
     "movies2_dict.pkl": "https://drive.google.com/uc?export=download&id=1glrH-nYq2rRqKv0XZ9-jnGtMGoWH8as6&confirm=1",
@@ -41,10 +41,10 @@ def download_all_files():
             # Use stream=True for large files and allow redirects
             response = requests.get(file_url, stream=True, allow_redirects=True) 
             
-            # Check if the download failed (e.g., got a non-file response)
-            if response.status_code != 200:
-                st.error(f"Failed to download {file_name}. Status: {response.status_code}")
-                # We do NOT raise an error here to allow other files to download.
+            # Check for failed download (will happen if the URL is wrong)
+            if response.status_code != 200 and 'confirm' not in file_url:
+                st.error(f"Failed to download {file_name}. Status: {response.status_code}. (Check Google Drive link)")
+                continue # Skip writing the file if the request failed
                 
             with open(file_name, "wb") as f:
                 # Write content in chunks for large files
@@ -66,6 +66,9 @@ if 'user_menu' not in st.session_state:
 def main():
     # This must be the first thing that happens inside your main function
     download_all_files()
+
+    # The dataframes must be accessible globally for the initial_options to work
+    global new_df, movies, movies2 
 
     def initial_options():
         # To display menu
